@@ -114,6 +114,41 @@ bool removeEntryFromMapExtended(const F &key, std::map<F, S> &target) {
     return status;
 }
 
+// Часть с добавлением
+void addToQueue(const string &queuedUp, std::map<string, int> &queue) {
+    cout << "В очередь встал: " << queuedUp << endl;
+    std::pair<string, int> entry = { queuedUp, 1 };
+    // Добавили новую запись в map
+    bool status = addEntryToMapExtend(entry, queue);
+    // Если добавить не удалось, значит запись с таким ключом уже существует...
+    if (!status) {
+        int currentAmount;
+        // Получаем текущее количество в этом ключе...
+        retrieveMapValueByKeyExtended(currentAmount, entry.first, queue);
+        // Увеличиваем на один...
+        entry.second = currentAmount + 1;
+        // И меняем текущую запись
+        changeEntryInMapExtended(entry, queue);
+    }
+}
+
+// Часть с удалением по команде Next
+void removeFromQueue(std::map<string, int> &queue) {
+    // Если пока ничего в очереди нет, то и удалять нечего
+    if (queue.empty()) return;
+    // В противном случае находим ключ
+    string key = queue.begin()->first;
+    cout << "Команда NEXT. Удаление из очереди по фамилии: " << key << endl;
+
+    int amount;
+    // Получить value первого элемента. Это будет текущее количество
+    retrieveMapValueByKeyExtended(amount, key, queue);
+    // Если value больше 1, тогда нужно его уменьшить
+    if (amount > 1) changeEntryInMapExtended(std::make_pair(key, --amount), queue);
+    // Если равно 1, тогда удалить всю запись
+    else removeEntryFromMapExtended(key, queue);
+}
+
 int main() {
     SetConsoleCP(65001);
     SetConsoleOutputCP(65001);
@@ -121,51 +156,16 @@ int main() {
     std::srand(std::time(nullptr)); // NOLINT(cert-msc51-cpp)
 
     vector<string> list = {
-            "Ahmedov", "Bubnov", "Filippov", "Ivanov", "Izmailov", "Krupitsin", "Kuritsin", "Mazurov",
-            "Nosov", "Opalenko", "Ramadanov", "Rollov", "Victorenko", "Zyrianov", "Yarov",
-            "NEXT", "NEXT"
-            };
+            "Ahmedov", "Bubnov", "Filippov", "Ivanov", "Izmailov", "Krupitsin", "Kuritsin",
+            "NEXT", "NEXT" };
 
     std::map<string, int> queue;
 
     for (int i = 0; i < 20; ++i) {
         int index = getRandomIntInRange(0, (int)list.size() - 1);
 
-        if (list[index] == "NEXT") {
-            cout << "Команда: " << index << endl;
-            if (list.empty()) continue;
-
-            int currentAmount;
-            string key = queue.begin()->first;
-
-            // Получить value первый элемент. Это будет текущее количество
-            retrieveMapValueByKeyExtended(currentAmount, key, queue);
-            // Если больше 1, тогда уменьшить
-            if (currentAmount > 1) {
-                changeEntryInMapExtended(std::make_pair(key, currentAmount - 1), queue);
-            }
-            else {
-                // Если равно 1, тогда удалить
-                removeEntryFromMapExtended(key, queue);
-            }
-            continue;
-        }
-
-        cout << "В очередь встал " << index << ": " << list[index] << endl;
-        // Часть с добавлением
-        std::pair<string, int> entry = { list[index], 1 };
-
-        bool status = addEntryToMapExtend(entry, queue);
-        // Если добавить не удалось, значит запись с таким ключом уже существует...
-        if (!status) {
-            int currentAmount;
-            // Получаем текущее количество в этом ключе...
-            retrieveMapValueByKeyExtended(currentAmount, entry.first, queue);
-            // Увеличиваем на один...
-            entry.second = currentAmount + 1;
-            // И меняем текущую запись
-            changeEntryInMapExtended(entry, queue);
-        }
+        if (list[index] == "NEXT") removeFromQueue(queue);
+        else addToQueue(list[index], queue);
     }
 
     displayEntries(queue);
